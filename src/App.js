@@ -1,24 +1,48 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
+import TankSelect from './component/TankSelect'
+import RelatedTankTable from './component/RelatedTankTable'
+import { getModules, getTanksById } from './logic/wargamingRequests'
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+    
+    this.state = {
+      relatedTanks: {},
+      selectedTank: null,
+      tanks: {},
+    };
+  }
+
+  select_tank = async (tank) => {
+    this.setState({
+      selectedTank: tank,
+    })
+    const tankModules = await getModules(tank.module_ids);
+    let relatedTankIds = Object.keys(tankModules)
+      .map(module_id => tankModules[module_id].tanks)
+      .flat();
+
+    relatedTankIds = relatedTankIds
+      .filter((tank_id, index) => {
+        return relatedTankIds.indexOf(tank_id) === index;
+      });
+
+    console.log(relatedTankIds)
+
+    const relatedTanks = await getTanksById(relatedTankIds);
+    this.setState({
+      relatedTanks,
+    })
+  }
+
   render() {
     return (
       <div className="App">
         <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
+          <TankSelect onSelectTank={this.select_tank}/>
+          <RelatedTankTable tanks={this.state.relatedTanks}/>
         </header>
       </div>
     );
